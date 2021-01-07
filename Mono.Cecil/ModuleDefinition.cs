@@ -270,6 +270,9 @@ namespace Mono.Cecil {
 		Collection<Resource> resources;
 		Collection<ExportedType> exported_types;
 		TypeDefinitionCollection types;
+		ResourceDirectory win32ResourceDirectory;
+		internal byte[] Win32Resources;
+		internal uint Win32RVA;
 
 		internal Collection<CustomDebugInformation> custom_infos;
 
@@ -976,6 +979,27 @@ namespace Mono.Cecil {
 
 		public bool HasDebugHeader {
 			get { return Image != null && Image.DebugHeader != null; }
+		}
+
+		public ResourceDirectory Win32ResourceDirectory
+		{
+			get
+			{
+				if (win32ResourceDirectory == null && Image != null)
+				{
+					var rsrc = Image.GetSection(".rsrc");
+					if (Image.Win32Resources.Size > 0) {
+						var data = Image.GetReaderAt (Image.Win32Resources.VirtualAddress, Image.Win32Resources.Size,
+							(s, r) => r.ReadBytes ((int) s));
+						win32ResourceDirectory = RsrcReader.ReadResourceDirectory (data, rsrc.VirtualAddress);
+					}
+				}
+				return win32ResourceDirectory ?? (win32ResourceDirectory = new ResourceDirectory());
+			}
+			set
+			{
+				win32ResourceDirectory = value;
+			}
 		}
 
 		public ImageDebugHeader GetDebugHeader ()
